@@ -1,11 +1,11 @@
 
+const configOverride = require('./config/webpack.override');
+
 const resolve = require('path').resolve;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
-module.exports = {
-
-    mode: 'production',
+const config = {
 
     entry: resolve('./src/index.tsx'),
 
@@ -56,3 +56,5 @@ module.exports = {
     ],
 
 };
+
+module.exports = (env) => configOverride(config, env);
