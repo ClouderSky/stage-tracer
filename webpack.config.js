@@ -1,16 +1,16 @@
 
-const configOverride = require('./config/webpack.override');
-
 const resolve = require('path').resolve;
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+const paths = require('./script/utils/paths');
 
-const config = {
+
+module.exports = {
 
     entry: resolve('./src/index.tsx'),
 
     output: {
-        path: resolve('./build'),
+        path: paths.appBuild,
         publicPath: '/',
         filename: 'static/js/[name].bundle.js',
     },
@@ -18,7 +18,7 @@ const config = {
     devtool: 'source-map',
 
     devServer: {
-        contentBase: resolve('./build'),
+        contentBase: paths.appBuild,
     },
 
     resolve: {
@@ -36,7 +36,7 @@ const config = {
     plugins: [
         new HtmlWebpackPlugin({
             inject: true,
-            template: resolve('./public/index.html'),
+            template: paths.appHtml,
             minify: {
                 removeComments: true,
                 collapseWhitespace: true,
@@ -56,5 +56,3 @@ const config = {
     ],
 
 };
-
-module.exports = (env) => configOverride(config, env);

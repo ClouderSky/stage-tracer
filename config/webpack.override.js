@@ -1,42 +1,5 @@
 
-// const glob = require('glob');
-
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-// const DtsCreator = require('typed-css-modules');
-
-
-// const pluginName = 'TypingCssModulePlugin';
-
-// class TypingCssModulePlugin {
-
-//     constructor(options = {}) {
-//         this.sourcePattern =
-//             options.sourcePattern || 'src/**/*.module.+(css|scss|sass)';
-//     }
-
-//     apply(compiler) {
-//         const transformer = this.transformer(new DtsCreator());
-//         compiler.hooks.beforeRun.tapPromise(
-//             pluginName, c => this.getAllCssModule().then(matchs => {
-//                 matchs.forEach(transformer);
-//             }),
-//         );
-//     }
-
-//     getAllCssModule() {
-//         return new Promise((resolve, reject) => {
-//             glob(this.sourcePattern, (err, matchs) => {
-//                 err ? reject(err) : resolve(matchs);
-//             });
-//         });
-//     }
-
-//     transformer(creator) {
-//         return filename => creator.create(filename)
-//             .then(content => content.writeFile())
-//     }
-
-// }
 
 
 const defaultCssFilename = '/static/css/[name].[contenthash:8].css';
@@ -73,17 +36,14 @@ function useCssModule(config, env, cssFilename = defaultCssFilename) {
     if ( !config.plugins ) {
         config.plugins = [];
     }
-    // config.plugins.push(new TypingCssModulePlugin());
 
     if ( willExtractCss ) {
         config.plugins.push(new MiniCssExtractPlugin({filename: cssFilename}));
     }
 }
 
-module.exports = function(config, env) {
-    config.mode = env;
-
-    useCssModule(config, env);
+module.exports = function(config) {
+    useCssModule(config, config.mode);
 
     return config;
 };
