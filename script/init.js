@@ -1,6 +1,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
+const spawn = require('cross-spawn');
 const chalk = require('chalk');
 const ora = require('ora');
 var inquirer = require('inquirer');
@@ -47,15 +48,47 @@ function copyOP(source, target) {
         });
 }
 
+const commandExecutor = target => (cmd, arg = [], options = {}) => {
+    return spawn.sync(cmd, arg, { cwd: target, stdio: 'inherit', ...options });
+};
+
+function initDependencies(executor) {
+    let result = executor('yarn');
+    if ( 0 === result.status ) { return 'yarn'; }
+
+    result = executor('npm', ['install']);
+    if ( 0 === result.status ) { return 'npm'; }
+
+    return true;
+}
+
+const dependencyInstaller = executor => (cmd, args = []) =>
+    new Promise((resolve, reject) => {
+        const result = executor(cmd, args);
+        0 === result.status ? resolve(result) : reject(result);
+    });
+
+const cmdMap = useYarn => useYarn ? {
+    add: package => ['yarn', ['add', ...package]],
+    build: 'yarn build',
+    start: 'yarn start',
+    test: 'yarn test',
+} : {
+    add: package => ['npm', ['install', ...package]],
+    build: 'npm run build',
+    start: 'npm run start',
+    test: 'npm run test',
+};
+
 void async function() {
     const result = await prompt();
+
     const source = path.resolve(__dirname, '..');
     const target = process.cwd();
 
-    const spinner = ora('生成项目');
-
+    const spinner = ora();
+    spinner.start('生成项目');
     await generator(path.resolve(source, 'template'), target, result);
-
     const copy = copyOP(source, target);
     await Promise.all([
         copy('tsconfig.json'),
@@ -65,6 +98,43 @@ void async function() {
         copy('public'),
         copy('src'),
     ]);
+    spinner.succeed(chalk.green('生成完毕'));
 
-    spinner.succeed();
+    const executor = commandExecutor(target);
+
+    spinner.start('安装依赖包，可能需要等待几分钟');
+    const envTool = initDependencies(executor);
+    if ( false === envTool ) {
+        spinner.fail('安装依赖包失败');
+        console.log(chalk.yellow('请手动执行依赖安装：yarn 或 npm install'))
+        return;
+    }
+    spinner.succeed(chalk.green('依赖安装完毕'));
+
+    const commands = cmdMap('yarn' === envTool);
+    const installer = dependencyInstaller(executor);
+
+    try {
+        spinner.start('安装React');
+        const [cmd, args] = commands.add([
+            'react', 'react-dom', '@types/react', '@types/react-dom',
+        ]);
+        await installer(cmd, args);
+        spinner.succeed(chalk.green('React安装成功'));
+    } catch (err) {
+        spinner.fail(chalk.red('安装失败'));
+    }
+
+    const gitPath = path.resolve(target, '.git');
+    const gitExists = await fs.exists(gitPath);
+    if ( !gitExists ) {
+        spinner.start('初始化git仓库');
+        const { status } = executor('git', ['init']);
+        if ( 0 === status ) {
+            spinner.succeed(chalk.green('git仓库已创建'));
+        } else {
+            spinner.fail(chalk.red('git仓库创建失败'));
+            await fs.remove(gitPath);
+        }
+    }
 }();
