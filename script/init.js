@@ -1,10 +1,11 @@
 
 const fs = require('fs-extra');
+const glob = require('glob');
 const path = require('path');
 const spawn = require('cross-spawn');
 const chalk = require('chalk');
 const ora = require('ora');
-var inquirer = require('inquirer');
+const inquirer = require('inquirer');
 const Metalsmith = require('metalsmith');
 const Handlebars = require('handlebars');
 
@@ -52,16 +53,6 @@ const commandExecutor = target => (cmd, arg = [], options = {}) => {
     return spawn.sync(cmd, arg, { cwd: target, stdio: 'inherit', ...options });
 };
 
-function initDependencies(executor) {
-    let result = executor('yarn');
-    if ( 0 === result.status ) { return 'yarn'; }
-
-    result = executor('npm', ['install']);
-    if ( 0 === result.status ) { return 'npm'; }
-
-    return true;
-}
-
 const dependencyInstaller = executor => (cmd, args = []) =>
     new Promise((resolve, reject) => {
         const result = executor(cmd, args);
@@ -97,18 +88,34 @@ function printHelloWorld(commands) {
     console.log('搬砖快乐！');
 }
 
-void async function() {
-    const result = await prompt();
+function allGitIgnore() {
+    return new Promise((resolve, reject) => {
+        glob('./**/gitignore', (err, matchs) => {
+            err ? reject(err) : resolve(matchs);
+        });
+    });
+}
 
-    const source = path.resolve(__dirname, '..');
-    const target = process.cwd();
-
-    const spinner = ora();
+async function generateProject(context, source, target, spinner) {
     spinner.start('生成项目');
-    await generator(path.resolve(source, 'template'), target, result);
-    await fs.move(
-        path.resolve(target, 'gitignore'), path.resolve(target, '.gitignore'),
-    );
+
+    await generator(path.resolve(source, 'template'), target, context);
+
+    const renameGitIgnore = filename => new Promise(resolve => {
+        fs.move(
+            filename, filename.replace(/gitignore$/, '.gitignore'),
+            { overwrite: false }, err => {
+                if ( err ) {
+                    fs.remove(filename);
+                }
+                resolve(filename);
+            },
+        );
+    });
+
+    const gitIgnores = await allGitIgnore();
+    await Promise.all(gitIgnores.map(renameGitIgnore));
+
     const copy = copyOP(source, target);
     await Promise.all([
         copy('tsconfig.json'),
@@ -118,22 +125,31 @@ void async function() {
         copy('public'),
         copy('src'),
     ]);
+
     spinner.succeed(chalk.green('生成完毕'));
+}
 
-    const executor = commandExecutor(target);
-
+function initDependencies(executor, spinner) {
     spinner.start('安装依赖包，可能需要等待几分钟');
-    const envTool = initDependencies(executor);
+
+    const installDevDependencies = () => {
+        if ( 0 === executor('yarn').status ) { return 'yarn'; }
+        if ( 0 === executor('npm', ['install']).status ) { return 'npm'; }
+        return false;
+    };
+
+    const envTool = installDevDependencies();
     if ( false === envTool ) {
         spinner.fail('安装依赖包失败');
         console.log(chalk.yellow('请手动执行依赖安装：yarn 或 npm install'))
-        return;
+        return false;
     }
+
     spinner.succeed(chalk.green('依赖安装完毕'));
+    return cmdMap('yarn' === envTool);
+}
 
-    const commands = cmdMap('yarn' === envTool);
-    const installer = dependencyInstaller(executor);
-
+async function installPackage(installer, commands, spinner) {
     try {
         spinner.start('安装React');
         const [cmd, args] = commands.add([
@@ -144,7 +160,9 @@ void async function() {
     } catch (err) {
         spinner.fail(chalk.red('安装失败'));
     }
+}
 
+async function tryInitGit(target, executor, spinner) {
     const gitPath = path.resolve(target, '.git');
     const gitExists = await fs.exists(gitPath);
     if ( !gitExists ) {
@@ -157,6 +175,29 @@ void async function() {
             await fs.remove(gitPath);
         }
     }
+}
+
+void async function() {
+    const result = await prompt();
+
+    const source = path.resolve(__dirname, '..');
+    const target = process.cwd();
+
+    const spinner = ora();
+
+    await generateProject(result, source, target, spinner);
+
+    const executor = commandExecutor(target);
+
+    initDependencies(executor, spinner);
+
+    const commands = initDependencies(executor, spinner);
+    if ( false === commands ) { return; }
+
+    const installer = dependencyInstaller(executor);
+    await installPackage(installer, commands, spinner);
+
+    await tryInitGit(target, executor, spinner);
 
     printHelloWorld(commands);
 }();
