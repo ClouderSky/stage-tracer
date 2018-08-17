@@ -1,0 +1,23 @@
+{
+    "name": "{{name}}",
+    "version": "{{version}}",
+    "description": "{{description}}",
+    "private": true,
+    "scripts": {
+      "build": "tracer build",
+      "start": "tracer start",
+      "test": "tracer test"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+      "stage-tracer": "^0.1.0"
+    },
+    "dependencies": {
+      "@types/react": "^16.4.9",
+      "@types/react-dom": "^16.0.7",
+      "react": "^16.4.2",
+      "react-dom": "^16.4.2"
+    }
+  }
+  

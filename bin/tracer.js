@@ -14,11 +14,12 @@ program.command('build', '构建项目')
 
 const command = process.argv[2];
 switch ( command ) {
+    case 'init':
     case 'start':
     case 'test':
     case 'build': {
         const result = spawn.sync('node', [
-            path.resolve('./script/' + command + '.js'),
+            path.resolve(__dirname, '../script/' + command + '.js'),
             ...process.argv.splice(3),
         ], { stdio: 'inherit' });
         if ( result.signal ) {
