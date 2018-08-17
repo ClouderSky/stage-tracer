@@ -4,13 +4,12 @@
         "outDir": "./dist/",
         "sourceMap": true,
         "noImplicitAny": true,
+        "moduleResolution": "node",
         "allowJs": true,
-        "module": "commonjs",
+        "module": "esnext",
         "target": "es5",
-        "lib": ["es6", "dom"],
+        "lib": ["es2017", "dom"],
         "jsx": "react"
     },
-    "include": [
-        "./src/**/*"
-    ]
+    "include": ["./src/**/*"]
 }

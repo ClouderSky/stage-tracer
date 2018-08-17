@@ -1,4 +1,15 @@
 
+body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+}
+
+.fullScreen {
+    min-height: 100vh;
+}
+
 .center {
     text-align: center;
 }

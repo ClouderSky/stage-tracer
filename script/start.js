@@ -28,10 +28,9 @@ void async function() {
     const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
     const appName = package.name;
     const urls = prepareUrls(protocol, HOST, port);
-    const options = {};
 
     const compiler = createCompiler(webpack, config, appName, urls, useYarn);
-    const devServer = new WebpackDevServer(compiler, options);
+    const devServer = new WebpackDevServer(compiler, config.devServer || {});
 
     devServer.listen(port, HOST, err => {
         if ( err ) {

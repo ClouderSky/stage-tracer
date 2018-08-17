@@ -18,6 +18,10 @@ module.exports = {
     devtool: 'source-map',
 
     devServer: {
+        hot: true,
+        quiet: true,
+        inline: true,
+        watchContentBase: true,
         contentBase: paths.appBuild,
     },
 

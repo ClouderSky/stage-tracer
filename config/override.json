@@ -1,0 +1,4 @@
+{
+    "./tsImport": true,
+    "./cssModule": true
+}
