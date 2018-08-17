@@ -80,6 +80,23 @@ const cmdMap = useYarn => useYarn ? {
     test: 'npm run test',
 };
 
+function printHelloWorld(commands) {
+    console.log();
+    console.log('项目创建成功');
+    console.log('可以执行以下指令来操作项目：');
+    console.log();
+    console.log('  ' + chalk.cyan(commands.build));
+    console.log('    编译生产环境使用的文件');
+    console.log();
+    console.log('  ' + chalk.cyan(commands.test));
+    console.log('    运行项目测试');
+    console.log();
+    console.log('  ' + chalk.cyan(commands.start));
+    console.log('    启动一个调试用的服务器');
+    console.log();
+    console.log('搬砖快乐！');
+}
+
 void async function() {
     const result = await prompt();
 
@@ -137,4 +154,6 @@ void async function() {
             await fs.remove(gitPath);
         }
     }
+
+    printHelloWorld(commands);
 }();
