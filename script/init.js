@@ -106,6 +106,9 @@ void async function() {
     const spinner = ora();
     spinner.start('生成项目');
     await generator(path.resolve(source, 'template'), target, result);
+    await fs.move(
+        path.resolve(target, 'gitignore'), path.resolve(target, '.gitignore'),
+    );
     const copy = copyOP(source, target);
     await Promise.all([
         copy('tsconfig.json'),
