@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const spawn = require('cross-spawn');
 const program = require('commander');
-const package = require('../package.json');
+
+const cmdInit = require('../script/init');
 
 
 program
@@ -15,31 +14,18 @@ program
     .option('--tslint', '是否需要做规范检查')
     .option('--test', '是否需要进行单元测试');
 
-function defaultHandler(argv) {
-    if ( argv.includes('-v') || argv.includes('--version') ) {
-        return console.log(package.version);
-    }
-    program.help();
-}
 
-const command = process.argv[2];
-switch ( command ) {
-    case 'init':
-    case 'start':
-    case 'test':
-    case 'build': {
-        const result = spawn.sync('node', [
-            path.resolve(__dirname, '../script/' + command + '.js'),
-            ...process.argv.splice(3),
-        ], { stdio: 'inherit' });
-        if ( result.signal ) {
-            process.exit(1);
-        }
-        process.exit(result.status);
-        break;
+const main = async (cmd) => {
+    switch ( cmd ) {
+        case 'init' :
+            await cmdInit();
+        case 'build' :
+        case 'test' :
+        case 'start' :
+            break;
+        default :
+            program.help();
+            break;
     }
-    default:
-        defaultHandler(process.argv);
-}
-
-process.exit();
+};
+main(process.argv[2]);

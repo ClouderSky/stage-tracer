@@ -1,7 +1,7 @@
 {
-    "name": "{{name}}",
-    "version": "{{version}}",
-    "description": "{{description}}",
+    "name": "<%= name %>",
+    "version": "<%= version %>",
+    "description": "<%= description %>",
     "private": true,
     "scripts": {
         "build": "tracer build",
@@ -11,7 +11,7 @@
     "author": "",
     "license": "ISC",
     "devDependencies": {
-        "stage-tracer": "^0.1.0"
+        "stage-tracer": "^<%= pkgConfig.version %>"
     }
 }
   
